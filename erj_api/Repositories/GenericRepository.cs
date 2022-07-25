@@ -205,6 +205,48 @@ namespace erj_api.Repositories
                 return rows;
             }
         }
+        public async Task<IEnumerable<T>> GetByDynamicAsync(dynamic item,int pageNumber, int pageSize, string table = null)
+        {
+            int offset = pageNumber * pageSize;
+            var sqlBuilder = new SqlBuilder();
+            var template = sqlBuilder.AddTemplate($"SELECT * FROM {table ?? Table} /**where**/");
+            object itemAsObj = item;
+            var dynamicProps = itemAsObj.GetType().GetProperties();
+            var parameters = new DynamicParameters();
+            foreach (var prop in dynamicProps)
+            {
+                var thisProp = prop.GetValue(item);
+                if (thisProp == null)
+                {
+                    continue;
+                }
+                else if (prop.PropertyType != typeof(string) && prop.PropertyType.GetInterfaces().Contains(typeof(IEnumerable)))
+                {
+                    var pluralizer = new Pluralizer();
+                    if (pluralizer.IsPlural(prop.Name))
+                    {
+                        sqlBuilder.Where($"`{pluralizer.Singularize(prop.Name)}` IN @{prop.Name}");
+                    }
+                    else
+                    {
+                        sqlBuilder.Where($"`{prop.Name}` IN @{prop.Name}");
+                    }
+                }
+                else
+                {
+                    sqlBuilder.Where($"`{prop.Name}` = @{prop.Name}");
+                }
+                parameters.Add($"@{prop.Name}", thisProp);
+            }
+
+            string sql = $"{template.RawSql} OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY";
+            using (var db = EstablishConnection())
+            {
+                var rows = await db.QueryAsync<T>(sql, parameters);
+
+                return rows;
+            }
+        }
 
         public async Task<int> InsertAsync(T item)
         {

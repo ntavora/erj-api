@@ -14,6 +14,7 @@ namespace erj_api.Repositories.Interfaces
         Task<T> GetAsync(Guid id);
         Task<T> GetAsync(string id);
         Task<T> GetFirstOrDefaultByDynamicAsync(dynamic item, string table = null);
+        Task<IEnumerable<T>> GetByDynamicAsync(dynamic item, int pageNumber, int pageSize, string table = null);
         Task<IEnumerable<T>> GetByDynamicAsync(dynamic item, string table = null);
         Task UpdateAsync(T item);
         Task SetManyToRemovedAsync();
