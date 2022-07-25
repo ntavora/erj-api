@@ -1,0 +1,5 @@
+erj_api/Properties/launchSettings.json
+erj_api/obj/Debug/*
+erj_api/obj/project.nuget.cache
+erj_api/obj/erj_api.csproj.nuget.g.props
+erj_api/bin/Debug/*
